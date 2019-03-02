@@ -7,7 +7,7 @@ void map_init(struct Map* map)
   map->first = 0;
 }
 
-void map_push(struct Map* map, unsigned char mark, char* descript)
+void map_push(struct Map* map, uint8_t mark, char* descript)
 {
   struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
 
@@ -19,7 +19,7 @@ void map_push(struct Map* map, unsigned char mark, char* descript)
   map->last = new_node;
 }
 
-char* map_find(struct Map* map, unsigned char mark)
+char* map_find(struct Map* map, uint8_t mark)
 {
   struct Node* current = map->first;
 
