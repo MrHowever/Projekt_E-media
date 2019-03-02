@@ -1,4 +1,5 @@
-#inlcude<stdio.h>
+#ifndef MAP_H
+#define MAP_H
 
 struct Node
 {
@@ -13,34 +14,8 @@ struct Map
   struct Node* last;
 };
 
-void map_init(Map& map)
-{
-  map.first = NULL;
-}
+void map_init(struct Map*);
+void map_push(struct Map*, unsigned char, char*);
+char* map_find(struct Map*, unsigned char);
 
-void map_push(Map& map, unsigned char mark, char* descript)
-{
-  struct Node* new_node = (Node*) malloc(sizeof(Node));
-
-  new_node.descr = descript;
-  new_node.marker = mark;
-  new_node.next = NULL;
-
-  map.last->next = new_node;
-  map.last = new_node;
-}
-
-char* map_find(Map& map, unsigned char mark)
-{
-  struct Node* current = map.first;
-
-  while(current != NULL)
-  {
-    if(current->marker == mark)
-      return current->descr;
-    else
-      current = current->next;
-  }
-
-  return NULL;
-}
+#endif
