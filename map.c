@@ -12,8 +12,6 @@ void map_init(struct Map* map)
 void map_push(struct Map* map, uint16_t mark, char* descript)
 {
   struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
-  
-   printf("push = %d\n",mark);
    
   new_node->descr = descript;
   new_node->marker = mark;
@@ -39,7 +37,6 @@ char* map_find(struct Map* map, uint16_t mark)
 
   while(current != 0)
   {
-    //    printf("mark = %d\n",current->marker);
     if(current->marker == mark)
       return current->descr;
     else

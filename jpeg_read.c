@@ -175,6 +175,67 @@ void parse_exif_md(uint8_t* metadata)
     components_num = read32(metadata,&offset,align);
     entry_data = read32(metadata,&offset,align);
 
-    printf("%d %s\n",tag, map_find(&dict, tag));
+    print_exif_data(data_format, components_num, entry_data);
   }
+}
+
+void print_exif_data(uint16_t format, uint32_t comp_num, uint32_t data)
+{
+  uint32_t data_length;
+  uint32_t offset = 0;
+  
+  uint8_t* byte_array = 0;
+  uint16_t* bit16_array = 0;
+  uint32_t* bit32_array = 0;
+  
+  switch(format)
+  {
+  case 1:
+    data_length = comp_num;
+
+    if(data_length <= 4)
+    {
+      byte_array = 32bit_to_bytes(data);
+    }
+    else
+    {
+      offset = data;
+    }
+      for(int i = 0; i < comp_num; i++)
+	printf("%d ", byte_array[0]);
+    
+    
+  case 2:
+  case 3:
+  case 4:
+  case 5:
+  case 6:
+  case 7:
+  case 8:
+  case 9:
+  case 10:
+  case 11:
+  case 12:
+  default:
+  }
+}
+
+uint8_t* bit32_to_bytes(uint32_t original)
+{
+  uint8_t* byte_array = (uint8_t*) malloc(sizeof(uint8_t)*4);
+
+  byte_array[0] = (uint8_t) original >> 24;
+  byte_array[1] = (uint8_t) ((original & 0x00FF0000) >> 16);
+  byte_array[2] = (uint8_t) ((original & 0x0000FF00) >> 8);
+  byte_array[3] = (uint8_t) (original & 0x000000FF);
+}
+
+uint16_t* bit32_to_16bit(uint32_t original)
+{
+  uint16_t bit16_array = (uint16_t*) malloc(sizeof(uint16_t)*2);
+
+  bit16_array[0] = (uint16_t) (original >> 16);
+  bit16_array[1] = (uint16_t) (original & 0x0000FFFF);
+
+  return bit16_array;
 }
