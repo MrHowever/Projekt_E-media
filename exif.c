@@ -173,7 +173,7 @@ void parse_exif_md(uint8_t* metadata)
   printf("entries = %d\n", directory_entries);
   
   //Read IFD0
-  for(uint16_t i = 0; i < directory_entries; i++)
+  for(uint16_t i = 0; i < (directory_entries - 1); i++)             //-1 Because last entry is an offset to next IFD
   {
     tag = read16(metadata,&offset,align);
     data_format = read16(metadata,&offset,align);
