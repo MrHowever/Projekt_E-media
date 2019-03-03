@@ -1,4 +1,5 @@
 #include "jpeg_read.h"
+#include "exif.h"
 
 int main()
 {

@@ -1,4 +1,9 @@
 #include "exif.h"
+#include <string.h>
+#include <stdio.h>
+#include "jpeg_read.h"
+
+#define EXIF_BASE_OFFSET 6                                        //Skips the "Exif\0\0" string to correctly calculate offset
 
 void fill_exif_map(struct Map* map)
 {
@@ -111,4 +116,165 @@ void fill_exif_map(struct Map* map)
   map_push(map,0xa433,"LensMake");
   map_push(map,0xa434,"Lens model");
   map_push(map,0xa435,"Lens serial number");
+}
+
+
+void parse_exif_md(uint8_t* metadata)
+{
+  const char exif_header[7] = {metadata[0],metadata[1],metadata[2],metadata[3],metadata[4],metadata[5], '\0'};
+  const char byte_align[3] = {metadata[6],metadata[7],'\0'};
+  int align;
+  int offset = 0;
+  uint32_t IFDoffset = 0;
+  uint16_t directory_entries = 0;
+  uint16_t tag = 0, data_format = 0;
+  uint32_t components_num = 0, entry_data = 0;
+  struct Map dict;
+  uint32_t data_length = 0;
+  
+  map_init(&dict);
+  fill_exif_map(&dict);
+  
+  if(strcmp(exif_header,"Exif\0\0"))      //Check for valid Exif header
+  {
+    printf("\nCorrupted Exif format. Exiting.\n");
+    return;
+  }
+
+  if(!strcmp(byte_align,"II"))
+  {
+    align = 0;
+  }
+  else if(!strcmp(byte_align,"MM"))
+  {
+    align = 1;
+  }
+  else
+  {
+    printf("\nCorrupted byte allign information\n");
+    return;
+  }  
+
+  offset = 8;
+
+  if(read16(metadata,&offset,align) != 0x002A)    //Check for correct TAG mark
+  {
+    printf("\nCorrupted TAG mark\n");
+    return;
+  }
+
+  IFDoffset = read32(metadata,&offset,align);    //Offset to first IFD (IFD0)
+
+  //Move to IFD0
+  offset = IFDoffset + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
+
+  directory_entries = read16(metadata,&offset,align);  //Read the number of directory entries
+
+  printf("entries = %d\n", directory_entries);
+  
+  //Read IFD0
+  for(uint16_t i = 0; i < directory_entries; i++)
+  {
+    tag = read16(metadata,&offset,align);
+    data_format = read16(metadata,&offset,align);
+    components_num = read32(metadata,&offset,align);
+
+    printf("%-20s\t",map_find(&dict,tag));
+    
+    print_exif_data(data_format, components_num, metadata, offset,align);
+    offset += 4;    //Exif data or its' offset is contained in 4 bytes
+  }
+}
+
+uint32_t data_size(uint16_t data_format)
+{
+  switch(data_format)
+  {
+  case 1:
+  case 2:
+  case 6:
+  case 7:
+    return 1;
+    break;
+
+  case 3:
+  case 8:
+    return 2;
+    break;
+
+  case 4:
+  case 9:
+  case 11:
+    return 4;
+    break;
+    
+  case 5:
+  case 10:
+  case 12:
+    return 8;
+    break;
+
+  default:
+    printf("Unknown data format\n");
+    return 0;
+    break;
+  }
+}
+
+void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align)
+{
+  uint32_t data_length;
+  
+  data_length = data_size(format) * comp_num;
+
+  if(data_length > 4)
+    offset = read32(metadata, &offset,align) + EXIF_BASE_OFFSET;
+
+  for(int i = 0; i < comp_num; i++)
+  {
+    switch(format)
+    {
+    case 1:       //Unsigned byte
+      printf("%c ", metadata[offset+i]);
+      break;
+    case 2:       //ASCII string
+      printf("%c",  metadata[offset+i]);
+      break;
+    case 3:       //Unsigned short
+      printf("%hu ",  read16(metadata, &offset, align));
+      break;
+    case 4:       //Unsigned long
+      printf("%lu ", (long unsigned int) read32(metadata,&offset,align));
+      break;
+    case 5:       //Unsigned rational (unsigned long divided by unsigned long)
+      printf("%f ", ((double) read32(metadata,&offset,align))/((double) read32(metadata,&offset,align)));
+      break;
+    case 6:       //Signed byte
+      printf("%c ",  metadata[offset+i]);
+      break;
+    case 7:       //Undefined
+      printf("%d ",  metadata[offset+i]);
+      break;
+    case 8:       //Signed short
+      printf("%hd ", read16(metadata,&offset,align));
+      break;
+    case 9:       //Signed long
+      printf("%ld ", (long unsigned int) read32(metadata,&offset,align));
+      break;
+    case 10:      //Signed rational
+      printf("%f ", ((double) read32(metadata,&offset,align))/((double) read32(metadata,&offset,align)));
+      break;
+    case 11:      //Single float
+      printf("%f ", (float) read32(metadata,&offset,align));
+      break;
+    case 12:      //Double float
+      printf("%f %f ", (float) read32(metadata,&offset,align), (float) read32(metadata,&offset,align));
+      break;
+    default:
+      printf("\nUndefined data format\n");
+      break;
+    }
+  }
+
+  printf("\n");
 }
