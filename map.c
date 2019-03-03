@@ -1,30 +1,45 @@
 #include <stdlib.h>
 #include "map.h"
+#include <stdio.h>
 
 
 void map_init(struct Map* map)
 {
   map->first = 0;
+  map->last = 0;
 }
 
-void map_push(struct Map* map, uint8_t mark, char* descript)
+void map_push(struct Map* map, uint16_t mark, char* descript)
 {
   struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));
-
+  
+   printf("push = %d\n",mark);
+   
   new_node->descr = descript;
   new_node->marker = mark;
   new_node->next = 0;
 
-  map->last->next = new_node;
-  map->last = new_node;
+  if(map->first == 0)
+    map->first = new_node;
+  
+  if(map->last != 0)
+  {
+    map->last->next = new_node;
+    map->last = new_node;
+  }
+  else
+  {
+    map->last = new_node;
+  }
 }
 
-char* map_find(struct Map* map, uint8_t mark)
+char* map_find(struct Map* map, uint16_t mark)
 {
   struct Node* current = map->first;
 
   while(current != 0)
   {
+    //    printf("mark = %d\n",current->marker);
     if(current->marker == mark)
       return current->descr;
     else

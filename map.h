@@ -5,7 +5,7 @@
 
 struct Node
 {
-  uint8_t marker;
+  uint16_t marker;
   char* descr;
   struct Node* next;
 };
@@ -17,7 +17,7 @@ struct Map
 };
 
 void map_init(struct Map*);
-void map_push(struct Map*, uint8_t, char*);
-char* map_find(struct Map*, uint8_t);
+void map_push(struct Map*, uint16_t, char*);
+char* map_find(struct Map*, uint16_t);
 
 #endif
