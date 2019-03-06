@@ -43,5 +43,5 @@ char* map_find(struct Map* map, uint16_t mark)
       current = current->next;
   }
 
-  return 0;
+  return "Non-standard tag";
 }

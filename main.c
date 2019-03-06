@@ -3,7 +3,7 @@
 
 int main()
 {
-  parse_exif_md(read_jpeg("obrazek.jpeg"));
+  read_jpeg("obrazek1.jpeg");
 
   return 0;
 }

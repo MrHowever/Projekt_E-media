@@ -121,26 +121,17 @@ void fill_exif_map(struct Map* map)
 
 void parse_exif_md(uint8_t* metadata)
 {
-  const char exif_header[7] = {metadata[0],metadata[1],metadata[2],metadata[3],metadata[4],metadata[5], '\0'};
   const char byte_align[3] = {metadata[6],metadata[7],'\0'};
   int align;
   int offset = 0;
   uint32_t IFDoffset = 0;
-  uint16_t directory_entries = 0;
-  uint16_t tag = 0, data_format = 0;
-  uint32_t components_num = 0, entry_data = 0;
+  uint32_t subifd_offset = 0;
+  uint32_t ifd1_offset = 0;
   struct Map dict;
-  uint32_t data_length = 0;
   
   map_init(&dict);
   fill_exif_map(&dict);
   
-  if(strcmp(exif_header,"Exif\0\0"))      //Check for valid Exif header
-  {
-    printf("\nCorrupted Exif format. Exiting.\n");
-    return;
-  }
-
   if(!strcmp(byte_align,"II"))
   {
     align = 0;
@@ -168,21 +159,99 @@ void parse_exif_md(uint8_t* metadata)
   //Move to IFD0
   offset = IFDoffset + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
 
+  printf("Offset = %d\n",IFDoffset);
+  
+  ifd1_offset = read_ifd(metadata,offset,align,&dict, &subifd_offset);
+
+  printf("\nSubifd offset = %lu\n",(long unsigned int) subifd_offset);
+  
+  if(subifd_offset >= 8)
+    read_ifd(metadata, subifd_offset + EXIF_BASE_OFFSET,align,&dict, &subifd_offset);
+
+  if(ifd1_offset >= 8)
+    read_ifd(metadata, ifd1_offset,align,&dict, &subifd_offset);
+}
+
+uint32_t read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, uint32_t* sub_ifd_offset)
+{
+  uint16_t directory_entries = 0;
+  uint16_t tag = 0, data_format = 0;
+  uint32_t components_num = 0, entry_data = 0;
+  uint32_t data_length = 0;
+  uint32_t next_ifd_offset = 0;
+  int get_val = 0;
+  uint32_t temp_offset = 0;
+
   directory_entries = read16(metadata,&offset,align);  //Read the number of directory entries
 
   printf("entries = %d\n", directory_entries);
+
+  printf("\n%-4s\t\t%-20s\t\t%s\t\t%s\t\t%s\n\n","Tag","Description","Value type","Components","Value");
+
+  printf("dir entries = %d align = %d\n",directory_entries,align);
   
   //Read IFD0
-  for(uint16_t i = 0; i < (directory_entries - 1); i++)             //-1 Because last entry is an offset to next IFD
-  {
-    tag = read16(metadata,&offset,align);
-    data_format = read16(metadata,&offset,align);
-    components_num = read32(metadata,&offset,align);
+  for(uint16_t i = 0; i < directory_entries; i++)             //-1 Because last entry is an offset to next IFD
+    {
+      tag = read16(metadata,&offset,align);
+      data_format = read16(metadata,&offset,align);
+      components_num = read32(metadata,&offset,align);
 
-    printf("%-20s\t",map_find(&dict,tag));
-    
-    print_exif_data(data_format, components_num, metadata, offset,align);
-    offset += 4;    //Exif data or its' offset is contained in 4 bytes
+      
+            printf("0x%04X\t\t%-25s\t%-20s\t%d\t\t\t",tag,map_find(dict,tag), val_t(data_format),components_num);
+
+      if(tag == 0x8769)
+        get_val = 1;
+	
+            temp_offset = print_exif_data(data_format, components_num, metadata, offset,align,get_val);
+
+      
+      
+      if(get_val)
+        *sub_ifd_offset = temp_offset;
+	
+      offset += 4;    //Exif data or its' offset is contained in 4 bytes
+
+      get_val = 0;
+    }
+
+  next_ifd_offset = read32(metadata,&offset,align) + EXIF_BASE_OFFSET;
+
+  printf("IFD offset = %d", next_ifd_offset);
+  
+  return next_ifd_offset;
+}
+
+char* val_t(uint16_t data_format)
+{
+  switch(data_format)
+  {
+    case 1:
+      return "Unsigned byte";
+    case 2:
+      return "ASCII string";
+    case 3:
+      return "Unsigned short";
+    case 4:
+      return "Unsigned long";
+    case 5:
+      return "Unsigned rational";
+    case 6:
+      return "Signed byte";
+    case 7:
+      return "Undefined";
+    case 8:
+      return "Signed short";
+    case 9:
+      return "Signed long";
+    case 10:
+      return "Signed rational";
+    case 11:
+      return "Single float";
+    case 12:
+      return "Double float";
+    default:
+      return "Unknown";
   }
 }
 
@@ -221,15 +290,35 @@ uint32_t data_size(uint16_t data_format)
   }
 }
 
-void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align)
+uint32_t print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align, int get_val)
 {
   uint32_t data_length;
+  uint32_t subifd_offset = 0;
+  uint32_t tmp_val = 0;
+  
+  if(format == 7)           //Its undefined what does undefined data contain so just print whatever
+  {
+    tmp_val = read32(metadata,&offset,align);
+    printf("%d\n",tmp_val);
+    
+    if(get_val)
+      return tmp_val;
+      
+    return 0;
+  }
   
   data_length = data_size(format) * comp_num;
 
   if(data_length > 4)
     offset = read32(metadata, &offset,align) + EXIF_BASE_OFFSET;
 
+  if(get_val)        //Case for returning SubIFD offset
+  {
+    subifd_offset = read32(metadata, &offset,align);
+    printf("%lu\n", (long unsigned int) subifd_offset);
+    return subifd_offset;  
+  }
+  
   for(int i = 0; i < comp_num; i++)
   {
     switch(format)
@@ -253,7 +342,6 @@ void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int 
       printf("%c ",  metadata[offset+i]);
       break;
     case 7:       //Undefined
-      printf("%d ",  metadata[offset+i]);
       break;
     case 8:       //Signed short
       printf("%hd ", read16(metadata,&offset,align));
@@ -277,4 +365,5 @@ void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int 
   }
 
   printf("\n");
+  return 0;
 }
