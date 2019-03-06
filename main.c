@@ -3,7 +3,7 @@
 
 int main()
 {
-  read_jpeg("obrazek1.jpeg");
+  read_jpeg("obrazek.jpeg");
 
   return 0;
 }

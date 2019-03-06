@@ -1,7 +1,7 @@
 CC = gcc
 
-all: main.o jpeg_read.o map.o exif.o
-	$(CC) main.o jpeg_read.o map.o exif.o
+all: main.o jpeg_read.o map.o exif.o jfif.o
+	$(CC) main.o jpeg_read.o map.o exif.o jfif.o
 
 main.o: main.c
 	$(CC) -c main.c
@@ -14,6 +14,9 @@ map.o: map.c map.h
 
 exif.o: exif.c exif.h
 	$(CC) -c exif.c
+
+jfif.o: jfif.c jfif.h
+	$(CC) -c jfif.c
 
 clean:
 	rm -f *.o

@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-uint8_t* read_jpeg(const char*);
+int read_jpeg(const char*);
 
 uint16_t intel_to_mot16(uint8_t*);
 uint32_t intel_to_mot32(uint8_t*);

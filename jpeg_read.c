@@ -5,6 +5,55 @@
 #include "jpeg_read.h"
 #include "map.h"
 #include "exif.h"
+#include "jfif.h"
+
+
+uint16_t read_word(FILE* file)
+{
+  uint8_t* first = (uint8_t*) malloc(sizeof(uint8_t));
+  uint8_t* second = (uint8_t*) malloc(sizeof(uint8_t));
+
+  fread(first,1,1,file);
+  fread(second,1,1,file);
+
+  uint16_t first_val = (*first) << 8;
+  uint16_t second_val = *second;
+
+  free(first);
+  free(second);
+  
+  return first_val | second_val;
+}
+
+uint8_t read_byte(FILE* file)
+{
+  uint8_t* ptr = (uint8_t*) malloc(sizeof(uint8_t));
+  uint8_t val = 0;
+  fread(ptr,1,1,file);
+  val = *ptr;
+  free(ptr);
+  return val;
+}
+
+uint16_t* read_n_words(int n, FILE* file)
+{
+  uint16_t* arr = (uint16_t*) malloc(n*sizeof(uint16_t));
+
+  for(int i = 0; i < n; i++)
+    arr[i] = read_word(file);
+
+  return arr;
+}
+
+uint8_t* read_n_bytes(int n, FILE* file)
+{
+  uint8_t* arr = (uint8_t*) malloc(n*sizeof(uint8_t));
+
+  for(int i = 0; i < n; i++)
+    arr[i] = read_byte(file);
+
+  return arr;
+}
 
 uint16_t intel_to_mot16(uint8_t* first)
 {
@@ -73,25 +122,19 @@ void read_sof(FILE* jpeg_file)
 {
   uint8_t* byte = (uint8_t*) malloc(sizeof(uint8_t));
   uint8_t* word = (uint8_t*) malloc(2*sizeof(uint8_t));
-  uint8_t* rows,*columns;
-  uint8_t* components; //a
-
-  rows = (uint8_t*) malloc(2*sizeof(uint8_t));
-  columns = (uint8_t*) malloc(2*sizeof(uint8_t));
-  components = (uint8_t*) malloc(sizeof(uint8_t));
+  uint16_t rows,columns;
+  uint8_t components;
   
-  fread(word,1,2,jpeg_file);    //Read header length
-  fread(byte,1,1,jpeg_file);    //Read sample precision
+  read_word(jpeg_file);    //Read header length
+  read_byte(jpeg_file);    //Read sample precision
 
-  printf("found marker Cx and size = %d %d in offset %ld\n",word[0],word[1],ftell(jpeg_file));
-  
-  fread(rows,2,1,jpeg_file);    //Read rows
-  fread(columns,2,1,jpeg_file); //Read columns
-  fread(components,1,1,jpeg_file); //Read components
+  rows = read_word(jpeg_file);    //Read rows
+  columns = read_word(jpeg_file); //Read columns
+  components = read_byte(jpeg_file); //Read components
 
   fseek(jpeg_file,9,1); //Skip remaininf information in this segment
   
-  printf("Image size: %d x %d\nColor depth (Bit depth): %d\n",rows[0]*256+rows[1],columns[0]*256+columns[1],*components);
+  printf("Image size: %d x %d\nColor depth (Bit depth): %d\n",rows,columns,components);
 }
 
 int has_length(uint8_t marker)
@@ -117,71 +160,16 @@ int has_length(uint8_t marker)
   }
 }
 
-uint16_t read_word(FILE* file)
-{
-  uint8_t* first = (uint8_t*) malloc(sizeof(uint8_t));
-  uint8_t* second = (uint8_t*) malloc(sizeof(uint8_t));
-
-  fread(first,1,1,file);
-  fread(second,1,1,file);
-
-  uint16_t first_val = (*first) << 8;
-  uint16_t second_val = *second;
-
-  free(first);
-  free(second);
-  
-  return first_val | second_val;
-}
-
-uint8_t read_byte(FILE* file)
-{
-  uint8_t* ptr = (uint8_t*) malloc(sizeof(uint8_t));
-  uint8_t val = 0;
-  fread(ptr,1,1,file);
-  val = *ptr;
-  free(ptr);
-  return val;
-}
-
-uint16_t* read_n_words(int n, FILE* file)
-{
-  uint16_t* arr = (uint16_t*) malloc(n*sizeof(uint16_t));
-
-  for(int i = 0; i < n; i++)
-    arr[i] = read_word(file);
-
-  return arr;
-}
-
-uint8_t* read_n_bytes(int n, FILE* file)
-{
-  uint8_t* arr = (uint8_t*) malloc(n*sizeof(uint8_t));
-
-  for(int i = 0; i < n; i++)
-    arr[i] = read_byte(file);
-
-  return arr;
-}
-
-uint8_t* read_jpeg(const char* filename)
+int read_jpeg(const char* filename)
 {
   FILE* jpeg_file = fopen(filename,"rb");                 //File stream
   uint8_t* c = 0;                                         //Variable to store a single byte of data
-  int end = 1;                                            //Boolean variable to end the loop
-  uint8_t* metadata = 0;
-  uint16_t mdata_size = 0;
-  uint8_t* header = 0;
-  uint16_t seg_size = 0;
-  int x = 0;
-  uint8_t prev = 0;
+  uint8_t* metadata = 0;                                  //Pointer that will contain read metadata if it is encountered
+  uint8_t* header = 0;                                    //Variable that will hold a header of the segment to check it svalidity
+  uint16_t seg_size = 0;                                  //Size of a segment
+  uint8_t prev = 0;                                       //Value of previous byte
   
   c = (uint8_t*) malloc(sizeof(uint8_t));
-
-  
-  fseek(jpeg_file,0L,SEEK_END);
-  printf("File size = %ld\n",ftell(jpeg_file));
-  rewind(jpeg_file);
   
   if(!jpeg_file)
   {
@@ -189,60 +177,58 @@ uint8_t* read_jpeg(const char* filename)
     return 0;
   }
 
-  
-  
   while(1)        //Read consecutive bytes to find markers
   {    
-    end = fread(c,1,1,jpeg_file);
+    fread(c,1,1,jpeg_file);
 
-    if(prev == 0xFF && *c == 0xD9)
-      {
-	printf("found marker %X  in offset %ld\n",*c,ftell(jpeg_file));
-	break;
-      }
-    
     if( prev == 0xFF )           //0xFF byte signals that next byte might be a marker
     {
-      if(*c != 0 && *c != 0xFF)
-	printf("Marker = %X\n",*c);
-      
-      if(is_sof(*c))
-	{
-	  printf("sof marker = %X\n",*c);
+      if( *c == 0xD9)
+	break;
+      else if(is_sof(*c))             //Detect SOF marker
 	  read_sof(jpeg_file);
-	}	
-      else if( *c == 0xE1)           //APP1 marker equals 0xE1
+      else if (*c == 0xE0)       //Detect JFIF/JFXX marker
 	{
-	  printf("Znaleziono metadane Exif\n");
-	  printf("\nptr position = %ld\n",ftell(jpeg_file));
-	  
-	  mdata_size = read_word(jpeg_file);
+	  seg_size = read_word(jpeg_file);
 
-	  printf("e1 block size = %d\n",mdata_size);
+	  header = read_n_bytes(5,jpeg_file);
+
+	  metadata = read_n_bytes(seg_size-7,jpeg_file);
 	  
-    	  metadata = (uint8_t*) malloc(mdata_size-2);	  
-	  metadata = read_n_bytes(mdata_size-2,jpeg_file);   //Read metadata, -2 because the length contains already read 2 bytes of length
-	   
-	  header = read_n_bytes(6,jpeg_file);
+	  if(!strcmp(header,"JFIF\0"))
+	    print_jfif(read_jfif(metadata));
+	  else if(!strcmp(header,"JFXX\0"))
+	    fseek(jpeg_file,seg_size-2,1);
+	}
+      else if( *c == 0xE1)           //APP1 marker equals 0xE1, Exif metadata
+	{	  
+	  seg_size = read_word(jpeg_file);
+	  
+    	  metadata = (uint8_t*) malloc(seg_size-2);	  
+	  metadata = read_n_bytes(seg_size-2,jpeg_file);   //Read metadata, -2 because the length contains already read 2 bytes of length
+
+	  header = (uint8_t*) malloc(6*sizeof(uint8_t));
 	  
 	  strncpy(header,metadata,6);
 	  
 	  if(!strcmp(header,"Exif\0\0"))      //Check for valid Exif header
 	    parse_exif_md(metadata);
 
-	  printf("offset after e1 %ld\n",ftell(jpeg_file));
+	  free(header);
+	  free(metadata);
 	}
-      else if(has_length(*c))
+      else if(has_length(*c))            //If a segment that doesnt contain any useful metadata is encountered, jump through it
 	{
 	  seg_size = read_word(jpeg_file);
-	  printf("found marker %X and size = %d in offset %ld\n",*c,seg_size,ftell(jpeg_file));
-
 	  fseek(jpeg_file,seg_size-2,1);
 	}
     }
 
     prev = *c;
-   
   }
-  return metadata;
+
+  fclose(jpeg_file);
+  free(c);
+
+  return 0;
 }
