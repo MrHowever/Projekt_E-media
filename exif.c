@@ -208,6 +208,7 @@ void parse_exif_md(uint8_t* metadata)
   uint32_t subifd_offset = 0;
   uint32_t ifd1_offset = 0;
   struct Map dict;
+  struct ifd_offsets offsets;
   
   map_init(&dict);
   fill_exif_map(&dict);
@@ -227,19 +228,19 @@ void parse_exif_md(uint8_t* metadata)
   //Move to IFD0
   offset = IFDoffset + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
   
-  ifd1_offset = read_ifd(metadata,offset,align,&dict, &subifd_offset);
-  
-  if(subifd_offset >= 8)
-    read_ifd(metadata, subifd_offset + EXIF_BASE_OFFSET,align,&dict, &subifd_offset);
+  read_ifd(metadata,offset,align,&dict, &offsets);
 
-  if(ifd1_offset >= 8)
-    read_ifd(metadata, ifd1_offset,align,&dict, &subifd_offset);
+  if(offsets.subifd_offset >= 8)
+    read_ifd(metadata, offsets.subifd_offset + EXIF_BASE_OFFSET,align,&dict, &offsets);
+
+  if(offsets.ifd1_offset >= 8)
+    read_ifd(metadata, offsets.ifd1_offset + EXIF_BASE_OFFSET,align,&dict, &offsets);
 }
 
-uint32_t read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, uint32_t* sub_ifd_offset)
+void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct ifd_offsets* offsets)
 {
   uint16_t directory_entries = 0;
-  uint16_t tag = 0, data_format = 0;
+  uint16_t tag = 0, data_format = 0, data = 0;
   uint32_t components_num = 0;
   uint32_t next_ifd_offset = 0;
   int get_val = 0;
@@ -255,25 +256,19 @@ uint32_t read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, ui
     tag = read16(metadata,&offset,align);
     data_format = read16(metadata,&offset,align);
     components_num = read32(metadata,&offset,align);
+    //data = read32(metadata,&offset,align);
     
     printf("0x%04X\t\t%-25s\t%-20s\t%d\t\t\t",tag,map_find(dict,tag), val_t(data_format),components_num);
     
+    print_exif_data(data_format, components_num, metadata,offset,align,get_val);
+
     if(tag == 0x8769)
-      get_val = 1;
-    
-    temp_offset = print_exif_data(data_format, components_num, metadata, offset,align,get_val);
-    
-    if(get_val)
-      *sub_ifd_offset = temp_offset;
-    
-    offset += 4;    //Exif data or its' offset is contained in 4 bytes
-    
-    get_val = 0;
+      offsets->subifd_offset = read32(metadata,&offset,align);
+    else
+      offset += 4;    //Exif data or its' offset is contained in 4 bytes
   }
 
-  next_ifd_offset = read32(metadata,&offset,align) + EXIF_BASE_OFFSET;
-  
-  return next_ifd_offset;
+  offsets->ifd1_offset = read32(metadata,&offset,align);
 }
 
 uint32_t print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align, int get_val)
