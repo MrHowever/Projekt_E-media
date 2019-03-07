@@ -1,7 +1,7 @@
 #include "exif.h"
 #include <string.h>
 #include <stdio.h>
-#include "jpeg_read.h"
+#include "file_read_func.h"
 
 #define EXIF_BASE_OFFSET 6                                        //Skips the "Exif\0\0" string to correctly calculate offset
 
@@ -118,110 +118,6 @@ void fill_exif_map(struct Map* map)
   map_push(map,0xa435,"Lens serial number");
 }
 
-
-void parse_exif_md(uint8_t* metadata)
-{
-  const char byte_align[3] = {metadata[6],metadata[7],'\0'};
-  int align;
-  int offset = 0;
-  uint32_t IFDoffset = 0;
-  uint32_t subifd_offset = 0;
-  uint32_t ifd1_offset = 0;
-  struct Map dict;
-  
-  map_init(&dict);
-  fill_exif_map(&dict);
-  
-  if(!strcmp(byte_align,"II"))
-  {
-    align = 0;
-  }
-  else if(!strcmp(byte_align,"MM"))
-  {
-    align = 1;
-  }
-  else
-  {
-    printf("\nCorrupted byte allign information\n");
-    return;
-  }  
-
-  offset = 8;
-
-  if(read16(metadata,&offset,align) != 0x002A)    //Check for correct TAG mark
-  {
-    printf("\nCorrupted TAG mark\n");
-    return;
-  }
-
-  IFDoffset = read32(metadata,&offset,align);    //Offset to first IFD (IFD0)
-
-  //Move to IFD0
-  offset = IFDoffset + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
-
-  printf("Offset = %d\n",IFDoffset);
-  
-  ifd1_offset = read_ifd(metadata,offset,align,&dict, &subifd_offset);
-
-  printf("\nSubifd offset = %lu\n",(long unsigned int) subifd_offset);
-  
-  if(subifd_offset >= 8)
-    read_ifd(metadata, subifd_offset + EXIF_BASE_OFFSET,align,&dict, &subifd_offset);
-
-  if(ifd1_offset >= 8)
-    read_ifd(metadata, ifd1_offset,align,&dict, &subifd_offset);
-}
-
-uint32_t read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, uint32_t* sub_ifd_offset)
-{
-  uint16_t directory_entries = 0;
-  uint16_t tag = 0, data_format = 0;
-  uint32_t components_num = 0, entry_data = 0;
-  uint32_t data_length = 0;
-  uint32_t next_ifd_offset = 0;
-  int get_val = 0;
-  uint32_t temp_offset = 0;
-
-  directory_entries = read16(metadata,&offset,align);  //Read the number of directory entries
-
-  printf("entries = %d\n", directory_entries);
-
-  printf("\n%-4s\t\t%-20s\t\t%s\t\t%s\t\t%s\n\n","Tag","Description","Value type","Components","Value");
-
-  printf("dir entries = %d align = %d\n",directory_entries,align);
-  
-  //Read IFD0
-  for(uint16_t i = 0; i < directory_entries; i++)             //-1 Because last entry is an offset to next IFD
-    {
-      tag = read16(metadata,&offset,align);
-      data_format = read16(metadata,&offset,align);
-      components_num = read32(metadata,&offset,align);
-
-      
-            printf("0x%04X\t\t%-25s\t%-20s\t%d\t\t\t",tag,map_find(dict,tag), val_t(data_format),components_num);
-
-      if(tag == 0x8769)
-        get_val = 1;
-	
-            temp_offset = print_exif_data(data_format, components_num, metadata, offset,align,get_val);
-
-      
-      
-      if(get_val)
-        *sub_ifd_offset = temp_offset;
-	
-      offset += 4;    //Exif data or its' offset is contained in 4 bytes
-
-      get_val = 0;
-    }
-
-  next_ifd_offset = read32(metadata,&offset,align) + EXIF_BASE_OFFSET;
-
-  printf("IFD offset = %d", next_ifd_offset);
-  
-  return next_ifd_offset;
-}
-
 char* val_t(uint16_t data_format)
 {
   switch(data_format)
@@ -290,9 +186,99 @@ uint32_t data_size(uint16_t data_format)
   }
 }
 
+int check_alignment(const char* alignment)
+{
+  if(!strcmp(alignment,"II"))
+   return 0;
+  else if(!strcmp(alignment,"MM"))
+    return 1;
+  else
+  {
+    printf("\nCorrupted byte allign information\n");
+    return -1;
+  }  
+}
+
+void parse_exif_md(uint8_t* metadata)
+{
+  const char byte_align[3] = {metadata[6],metadata[7],'\0'};
+  int align;
+  int offset = 0;
+  uint32_t IFDoffset = 0;
+  uint32_t subifd_offset = 0;
+  uint32_t ifd1_offset = 0;
+  struct Map dict;
+  
+  map_init(&dict);
+  fill_exif_map(&dict);
+
+  align = check_alignment(byte_align);
+  
+  offset = 8;
+
+  if(read16(metadata,&offset,align) != 0x002A)    //Check for correct TAG mark
+  {
+    printf("\nCorrupted TAG mark\n");
+    return;
+  }
+
+  IFDoffset = read32(metadata,&offset,align);    //Offset to first IFD (IFD0)
+
+  //Move to IFD0
+  offset = IFDoffset + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
+  
+  ifd1_offset = read_ifd(metadata,offset,align,&dict, &subifd_offset);
+  
+  if(subifd_offset >= 8)
+    read_ifd(metadata, subifd_offset + EXIF_BASE_OFFSET,align,&dict, &subifd_offset);
+
+  if(ifd1_offset >= 8)
+    read_ifd(metadata, ifd1_offset,align,&dict, &subifd_offset);
+}
+
+uint32_t read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, uint32_t* sub_ifd_offset)
+{
+  uint16_t directory_entries = 0;
+  uint16_t tag = 0, data_format = 0;
+  uint32_t components_num = 0;
+  uint32_t next_ifd_offset = 0;
+  int get_val = 0;
+  uint32_t temp_offset = 0;
+
+  directory_entries = read16(metadata,&offset,align);  //Read the number of directory entries
+
+  printf("\n%-4s\t\t%-20s\t\t%s\t\t%s\t\t%s\n\n","Tag","Description","Value type","Components","Value");
+  
+  //Read IFD
+  for(uint16_t i = 0; i < directory_entries; i++)             //-1 Because last entry is an offset to next IFD
+  {
+    tag = read16(metadata,&offset,align);
+    data_format = read16(metadata,&offset,align);
+    components_num = read32(metadata,&offset,align);
+    
+    printf("0x%04X\t\t%-25s\t%-20s\t%d\t\t\t",tag,map_find(dict,tag), val_t(data_format),components_num);
+    
+    if(tag == 0x8769)
+      get_val = 1;
+    
+    temp_offset = print_exif_data(data_format, components_num, metadata, offset,align,get_val);
+    
+    if(get_val)
+      *sub_ifd_offset = temp_offset;
+    
+    offset += 4;    //Exif data or its' offset is contained in 4 bytes
+    
+    get_val = 0;
+  }
+
+  next_ifd_offset = read32(metadata,&offset,align) + EXIF_BASE_OFFSET;
+  
+  return next_ifd_offset;
+}
+
 uint32_t print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align, int get_val)
 {
-  uint32_t data_length;
+  uint32_t data_length = 0;
   uint32_t subifd_offset = 0;
   uint32_t tmp_val = 0;
   
