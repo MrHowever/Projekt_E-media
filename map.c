@@ -9,6 +9,22 @@ void map_init(struct Map* map)
   map->last = 0;
 }
 
+void map_destroy(struct Map* map)
+{
+  struct Node* current, *temp;
+
+  current = map->first;
+  
+  while(current != 0)
+  {
+    temp = current->next;
+    free(current);
+    current = temp;
+  }
+
+  free(map);
+}
+
 void map_push(struct Map* map, uint16_t mark, char* descript)
 {
   struct Node* new_node = (struct Node*) malloc(sizeof(struct Node));

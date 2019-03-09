@@ -17,6 +17,7 @@ struct Map
 };
 
 void map_init(struct Map*);
+void map_destroy(struct Map*);
 void map_push(struct Map*, uint16_t, char*);
 char* map_find(struct Map*, uint16_t);
 

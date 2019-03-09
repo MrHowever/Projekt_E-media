@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "file_read_func.h"
+#include "jpeg_read.h"
 
 #define EXIF_BASE_OFFSET 6                                        //Skips the "Exif\0\0" string to correctly calculate offset
 
@@ -118,6 +119,42 @@ void fill_exif_map(struct Map* map)
   map_push(map,0xa435,"Lens serial number");
 }
 
+void fill_gps_map(struct Map* map)
+{
+  map_push(map,0x0000,"GPSVersion ID");
+  map_push(map,0x0001,"GPS latitude reference");
+  map_push(map,0x0002,"GPS latitude");
+  map_push(map,0x0003,"GPS longitude reference");
+  map_push(map,0x0004,"GPS longitude");
+  map_push(map,0x0005,"GPS altitude reference");
+  map_push(map,0x0006,"GPS altitude");
+  map_push(map,0x0007,"GPS time stamp");
+  map_push(map,0x0008,"GPS satellites");
+  map_push(map,0x0009,"GPS status");
+  map_push(map,0x000A,"GPS measure mode");
+  map_push(map,0x000B,"GPSDOP");
+  map_push(map,0x000C,"GPS Speed reference");
+  map_push(map,0x000D,"GPS speed");
+  map_push(map,0x000E,"GPS track reference");
+  map_push(map,0x000F,"GPS track");
+  map_push(map,0x0010,"GPS image direction reference");
+  map_push(map,0x0011,"GPS image direction");
+  map_push(map,0x0012,"GPSMapDatum");
+  map_push(map,0x0013,"GPS destination latitude ref.");
+  map_push(map,0x0014,"GPS destination latitude");
+  map_push(map,0x0015,"GPS destination longitude ref.");
+  map_push(map,0x0016,"GPS destination longitude");
+  map_push(map,0x0017,"GPS destination bearing ref.");
+  map_push(map,0x0018,"GPS destination bearing");
+  map_push(map,0x0019,"GPS destination distance ref.");
+  map_push(map,0x001A,"GPS destination distance");
+  map_push(map,0x001B,"GPS processing method");
+  map_push(map,0x001C,"GPS area information");
+  map_push(map,0x001D,"GPS date stamp");
+  map_push(map,0x001E,"GPS differential");
+  map_push(map,0x001F,"GPS positioning error");
+}
+
 char* val_t(uint16_t data_format)
 {
   switch(data_format)
@@ -203,38 +240,49 @@ void parse_exif_md(uint8_t* metadata)
 {
   const char byte_align[3] = {metadata[6],metadata[7],'\0'};
   int align;
-  int offset = 0;
-  uint32_t IFDoffset = 0;
-  uint32_t subifd_offset = 0;
-  uint32_t ifd1_offset = 0;
-  struct Map dict;
+  int offset = 8;
+  struct Map dict, gps_dict;
   struct ifd_offsets offsets;
   
   map_init(&dict);
+  map_init(&gps_dict);
   fill_exif_map(&dict);
+  fill_gps_map(&gps_dict);
 
   align = check_alignment(byte_align);
   
-  offset = 8;
-
   if(read16(metadata,&offset,align) != 0x002A)    //Check for correct TAG mark
   {
     printf("\nCorrupted TAG mark\n");
     return;
   }
 
-  IFDoffset = read32(metadata,&offset,align);    //Offset to first IFD (IFD0)
-
   //Move to IFD0
-  offset = IFDoffset + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
-  
-  read_ifd(metadata,offset,align,&dict, &offsets);
+  offset = read32(metadata,&offset,align) + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
+
+  print_header("Exif Metadata");
+  read_ifd(metadata,offset,align,&dict,&offsets);
 
   if(offsets.subifd_offset >= 8)
+  {
+    print_header("SubIFD Metadata");
     read_ifd(metadata, offsets.subifd_offset + EXIF_BASE_OFFSET,align,&dict, &offsets);
+  }
 
   if(offsets.ifd1_offset >= 8)
+  {
+    print_header("IFD1 Metadata");
     read_ifd(metadata, offsets.ifd1_offset + EXIF_BASE_OFFSET,align,&dict, &offsets);
+  }
+
+  if(offsets.gps_offset >= 8)
+  {
+    print_header("GPS Metadata");
+    read_ifd(metadata, offsets.gps_offset + EXIF_BASE_OFFSET,align,&gps_dict,&offsets);
+  }
+
+  map_destroy(&dict);
+  map_destroy(&gps_dict);
 }
 
 void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct ifd_offsets* offsets)
@@ -243,8 +291,6 @@ void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct
   uint16_t tag = 0, data_format = 0, data = 0;
   uint32_t components_num = 0;
   uint32_t next_ifd_offset = 0;
-  int get_val = 0;
-  uint32_t temp_offset = 0;
 
   directory_entries = read16(metadata,&offset,align);  //Read the number of directory entries
 
@@ -256,56 +302,36 @@ void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct
     tag = read16(metadata,&offset,align);
     data_format = read16(metadata,&offset,align);
     components_num = read32(metadata,&offset,align);
-    //data = read32(metadata,&offset,align);
     
     printf("0x%04X\t\t%-25s\t%-20s\t%d\t\t\t",tag,map_find(dict,tag), val_t(data_format),components_num);
     
-    print_exif_data(data_format, components_num, metadata,offset,align,get_val);
+    print_exif_data(data_format, components_num, metadata,offset,align);
 
     if(tag == 0x8769)
       offsets->subifd_offset = read32(metadata,&offset,align);
+    else if(tag == 0x8825)
+      offsets->gps_offset = read32(metadata,&offset,align);
     else
-      offset += 4;    //Exif data or its' offset is contained in 4 bytes
+      offset += 4;    //Exif data or its' offset is contained in 4 bytes    
   }
 
   offsets->ifd1_offset = read32(metadata,&offset,align);
 }
 
-uint32_t print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align, int get_val)
+void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align)
 {
-  uint32_t data_length = 0;
-  uint32_t subifd_offset = 0;
-  uint32_t tmp_val = 0;
+  uint32_t data_length  = data_size(format) * comp_num;
+  double nom,denom,result;
   
-  if(format == 7)           //Its undefined what does undefined data contain so just print whatever
-  {
-    tmp_val = read32(metadata,&offset,align);
-    printf("%d\n",tmp_val);
-    
-    if(get_val)
-      return tmp_val;
-      
-    return 0;
-  }
-  
-  data_length = data_size(format) * comp_num;
-
   if(data_length > 4)
     offset = read32(metadata, &offset,align) + EXIF_BASE_OFFSET;
 
-  if(get_val)        //Case for returning SubIFD offset
-  {
-    subifd_offset = read32(metadata, &offset,align);
-    printf("%lu\n", (long unsigned int) subifd_offset);
-    return subifd_offset;  
-  }
-  
   for(int i = 0; i < comp_num; i++)
   {
     switch(format)
     {
     case 1:       //Unsigned byte
-      printf("%c ", metadata[offset+i]);
+      printf("%u ", metadata[offset+i]);
       break;
     case 2:       //ASCII string
       printf("%c",  metadata[offset+i]);
@@ -317,7 +343,10 @@ uint32_t print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, 
       printf("%lu ", (long unsigned int) read32(metadata,&offset,align));
       break;
     case 5:       //Unsigned rational (unsigned long divided by unsigned long)
-      printf("%f ", ((double) read32(metadata,&offset,align))/((double) read32(metadata,&offset,align)));
+      nom = read32(metadata,&offset,align);
+      denom = read32(metadata,&offset,align);
+      result = denom == 0 ? 0 : nom/denom;
+      printf("%f ",result);
       break;
     case 6:       //Signed byte
       printf("%c ",  metadata[offset+i]);
@@ -346,5 +375,4 @@ uint32_t print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, 
   }
 
   printf("\n");
-  return 0;
 }

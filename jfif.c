@@ -1,15 +1,9 @@
 #include "jfif.h"
 #include "jpeg_read.h"
+#include "file_read_func.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-uint8_t read8(int* offset, uint8_t* data)
-{
-  uint8_t byte = data[*offset];
-  (*offset)++;
-  return byte;
-}
 
 struct jfif_data read_jfif(uint8_t* data)
 {
@@ -18,9 +12,6 @@ struct jfif_data read_jfif(uint8_t* data)
   int thumb_size = 0;
   
   jdata.major_ver = read8(&offset,data);
-
-  printf("majver = %X\n",jdata.major_ver);
-  
   jdata.minor_ver = read8(&offset,data);
   jdata.density_units = read8(&offset,data);
   jdata.x_density = read16(data,&offset,1);
@@ -39,6 +30,7 @@ struct jfif_data read_jfif(uint8_t* data)
 
 void print_jfif(struct jfif_data data)
 {
+  print_header("JFIF Metadata");
   printf("JFIF version: %d.%d\n", data.major_ver,data.minor_ver);
   printf("Density units: ");
 

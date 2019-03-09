@@ -107,3 +107,10 @@ uint32_t read32(uint8_t* first, int* offset, int allign)
   else
     return intel_to_mot32(first+off);
 }
+
+uint8_t read8(int* offset, uint8_t* data)
+{
+  uint8_t byte = data[*offset];
+  (*offset)++;
+  return byte;
+}

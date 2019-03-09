@@ -13,4 +13,6 @@ uint32_t read_mot32(uint8_t*);
 uint16_t read16(uint8_t*,int*,int);
 uint32_t read32(uint8_t*,int*,int);
 
+void print_header(const char*);
+
 #endif
