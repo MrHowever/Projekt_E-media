@@ -1,0 +1,35 @@
+#ifndef ENCRYPTION_H
+#define ENCRYPTION_H
+
+#include <math.h>
+
+struct public_key
+{
+  int64_t n;
+  int32_t e;
+};
+
+struct private_key
+{
+  int64_t n;
+  int64_t d;
+};
+
+int32_t gen_32bit();
+int32_t mod_pow(int64_t,int64_t,int64_t);
+int check_witness(int32_t,int32_t,int32_t);
+int32_t nth_bit(int32_t,int);
+int miller_rabin_test(int32_t);
+int32_t generate_prime();
+
+void generate_keys(struct public_key*, struct private_key*);
+int64_t gcd(int64_t,int64_t);
+int64_t lcm(int64_t,int64_t);
+
+void encrypt(int64_t*, int, struct public_key*);
+void decrypt(int64_t*, int, struct private_key*);
+
+int64_t mul_mod_inv(int64_t,int64_t);
+int64_t ext_euclidean(int64_t,int64_t,int64_t*,int64_t*);
+
+#endif

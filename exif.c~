@@ -1,0 +1,32 @@
+#include "exif.h"
+
+
+void fill_exif_map(struct Map* map)
+{
+  map_push(map,0x0001,"InteropIndex");
+  map_push(map,0x0100,"Image width");
+  map_push(map,0x0101,"Image height");
+  map_push(map,0x0102,"Bits per sample");
+  map_push(map,0x0103,"Compression");
+  map_push(map,0x0106,"Photometric Interpretation");
+  map_push(map,0x010e,"Image description");
+  map_push(map,0x010f,"Make");
+  map_push(map,0x0110,"Model");
+  map_push(map,0x0111,"Strip offsets");
+  map_push(map,0x0112,"Orientation");
+  map_push(map,0x0115,"Samples per pixel");
+  map_push(map,0x0116,"Rows per strip");
+  map_push(map,0x0117,"Strip byte counts");
+  map_push(map,0x011a,"X resolution");
+  map_push(map,0x011b,"Y resolution");
+  map_push(map,0x011c,"Planar configuration");
+  map_push(map,0x0128,"Resolution unit");
+  map_push(map,0x012d,"Transfer function");
+  map_push(map,0x0131,"Software");
+  map_push(map,0x0132,"Modify date");
+  map_push(map,0x013b,"Artist");
+  map_push(map,0x013f,"Primary chromaticities");
+  map_push(map,0x0201,"Thumbnail offset");
+  map_push(map,0x0202,"Thumbnail length");
+  map_push(map,0x0211,"YCbCrCoefficients");
+}

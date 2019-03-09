@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="Projekt_E_media"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Projekt_E_media">
+				<Option output="/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Projekt_E_media" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/mrhowever/Programming/Projects/Projekt_E_media/."/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 Projekt_E_media"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Projekt_E_media/fast">
+				<Option output="/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Projekt_E_media" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/mrhowever/Programming/Projects/Projekt_E_media/."/>
+					<Add directory="/usr/include/c++/7"/>
+					<Add directory="/usr/include/x86_64-linux-gnu/c++/7"/>
+					<Add directory="/usr/include/c++/7/backward"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/7/include-fixed"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 Projekt_E_media/fast"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -j4 -f &quot;/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/encryption.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/encryption.h">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/exif.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/exif.h">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/file_read_func.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/file_read_func.h">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/jfif.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/jfif.h">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/jpeg_read.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/jpeg_read.h">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/main.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/map.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/map.h">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/obrazek.jpeg">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/obrazek1.jpeg">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>

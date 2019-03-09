@@ -1,0 +1,6 @@
+#include "jfif.h"
+
+void read_jfif(uint8_t* data)
+{
+
+}

@@ -1,0 +1,10 @@
+#ifndef JFIF_H
+#define JFIF_H
+
+void read_jfif(uint8_t*);
+
+
+#endif
+
+
+

@@ -1,0 +1,53 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include "jpeg_read.h"
+
+char* read_jpeg(const char* filename)
+{
+  FILE* jpeg_file = fopen(filename,"rb");
+  char* c = 0;
+  int end = 0;
+  uint8_t* mdata_size = 0;
+  char* metadata = 0;
+  unsigned int read = 0;
+
+  c = (char*) malloc(sizeof(char));
+  
+  if(!jpeg_file)
+  {
+    printf("Error. Unable to open file\n");
+    return 0;
+  }
+
+  while(!end && read)        //Read consecutive bytes to find the APP1 marker
+  {
+    read = fread(c,1,1,jpeg_file);
+
+    if( *c == 0x0F )           //0xFF byte signals that next byte is a marker
+    {
+      fread(c,1,1,jpeg_file);
+
+      if( *c == 0x0F)
+	{
+	  fread(c,2,1,jpeg_file);
+	  
+	  if( *c == 0xE1)           //APP1 marker equals 0xE1
+	    {
+	    end = 1;
+	    printf("Znaleziono metadane Exif\n");
+	    }
+	}
+    }
+  }
+
+  printf("Koniec petli\n");
+
+  /*
+  fread(mdata_size,1,2,jpeg_file);  //Read Exif data size
+
+  metadata = (char*) malloc( (*mdata_size)*sizeof(char));
+  
+  fread(metadata,1,*mdata_size,jpeg_file);  //Read metadata
+  */
+  return metadata;
+}

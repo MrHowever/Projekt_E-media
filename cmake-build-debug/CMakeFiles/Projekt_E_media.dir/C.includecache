@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/mrhowever/Programming/Projects/Projekt_E_media/encryption.h
+math.h
+-
+
+/home/mrhowever/Programming/Projects/Projekt_E_media/jpeg_read.h
+stdio.h
+-
+stdint.h
+-
+
+/home/mrhowever/Programming/Projects/Projekt_E_media/main.c
+jpeg_read.h
+/home/mrhowever/Programming/Projects/Projekt_E_media/jpeg_read.h
+encryption.h
+/home/mrhowever/Programming/Projects/Projekt_E_media/encryption.h
+stdlib.h
+-
+time.h
+-
+math.h
+-
+
