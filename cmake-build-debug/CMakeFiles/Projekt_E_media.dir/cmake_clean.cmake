@@ -6,6 +6,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/Projekt_E_media.dir/jpeg_read.c.o"
   "CMakeFiles/Projekt_E_media.dir/main.c.o"
   "CMakeFiles/Projekt_E_media.dir/map.c.o"
+  "CMakeFiles/Projekt_E_media.dir/dct.c.o"
   "Projekt_E_media.pdb"
   "Projekt_E_media"
 )

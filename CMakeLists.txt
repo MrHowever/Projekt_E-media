@@ -20,4 +20,4 @@ add_executable(Projekt_E_media
         map.c
         map.h
         obrazek.jpeg
-        obrazek1.jpeg)
+        obrazek1.jpeg dct.h dct.c)

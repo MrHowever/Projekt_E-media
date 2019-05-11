@@ -123,6 +123,33 @@ Projekt_E_media/fast:
 	$(MAKE) -f CMakeFiles/Projekt_E_media.dir/build.make CMakeFiles/Projekt_E_media.dir/build
 .PHONY : Projekt_E_media/fast
 
+dct.o: dct.c.o
+
+.PHONY : dct.o
+
+# target to build an object file
+dct.c.o:
+	$(MAKE) -f CMakeFiles/Projekt_E_media.dir/build.make CMakeFiles/Projekt_E_media.dir/dct.c.o
+.PHONY : dct.c.o
+
+dct.i: dct.c.i
+
+.PHONY : dct.i
+
+# target to preprocess a source file
+dct.c.i:
+	$(MAKE) -f CMakeFiles/Projekt_E_media.dir/build.make CMakeFiles/Projekt_E_media.dir/dct.c.i
+.PHONY : dct.c.i
+
+dct.s: dct.c.s
+
+.PHONY : dct.s
+
+# target to generate assembly for a file
+dct.c.s:
+	$(MAKE) -f CMakeFiles/Projekt_E_media.dir/build.make CMakeFiles/Projekt_E_media.dir/dct.c.s
+.PHONY : dct.c.s
+
 encryption.o: encryption.c.o
 
 .PHONY : encryption.o
@@ -321,6 +348,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... Projekt_E_media"
 	@echo "... edit_cache"
+	@echo "... dct.o"
+	@echo "... dct.i"
+	@echo "... dct.s"
 	@echo "... encryption.o"
 	@echo "... encryption.i"
 	@echo "... encryption.s"

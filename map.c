@@ -21,8 +21,6 @@ void map_destroy(struct Map* map)
     free(current);
     current = temp;
   }
-
-  free(map);
 }
 
 void map_push(struct Map* map, uint16_t mark, char* descript)
@@ -36,13 +34,11 @@ void map_push(struct Map* map, uint16_t mark, char* descript)
   if(map->first == 0)
     map->first = new_node;
   
-  if(map->last != 0)
-  {
+  if(map->last != 0) {
     map->last->next = new_node;
     map->last = new_node;
   }
-  else
-  {
+  else {
     map->last = new_node;
   }
 }

@@ -10,6 +10,7 @@ struct ifd_offsets
   uint32_t gps_offset;
 };
 
+void offsets_init(struct ifd_offsets*);
 void fill_exif_map(struct Map*);
 void fill_gps_map(struct Map*);
 void parse_exif_md(uint8_t*);

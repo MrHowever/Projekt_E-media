@@ -86,6 +86,12 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/dct.c">
+			<Option target="Projekt_E_media"/>
+		</Unit>
+		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/dct.h">
+			<Option target="Projekt_E_media"/>
+		</Unit>
 		<Unit filename="/home/mrhowever/Programming/Projects/Projekt_E_media/encryption.c">
 			<Option target="Projekt_E_media"/>
 		</Unit>

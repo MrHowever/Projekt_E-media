@@ -4,6 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
+  "/home/mrhowever/Programming/Projects/Projekt_E_media/dct.c" "/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/CMakeFiles/Projekt_E_media.dir/dct.c.o"
   "/home/mrhowever/Programming/Projects/Projekt_E_media/encryption.c" "/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/CMakeFiles/Projekt_E_media.dir/encryption.c.o"
   "/home/mrhowever/Programming/Projects/Projekt_E_media/exif.c" "/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/CMakeFiles/Projekt_E_media.dir/exif.c.o"
   "/home/mrhowever/Programming/Projects/Projekt_E_media/file_read_func.c" "/home/mrhowever/Programming/Projects/Projekt_E_media/cmake-build-debug/CMakeFiles/Projekt_E_media.dir/file_read_func.c.o"
