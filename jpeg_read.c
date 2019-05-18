@@ -410,15 +410,15 @@ void read_metadata(struct JPEG* jpeg, FILE* output)
 void read_app_metadata(FILE* output, struct APP* app)
 {
     if(app->marker[1] == 0xE0) {
-        if (!strcmp(app->header, "JFIF\0"))
+        if (app->header != NULL && !strcmp(app->header, "JFIF\0"))
             print_jfif(read_jfif(app->metadata),output);
         else if (!strcmp(app->header, "JFXX\0"))
-            fprintf(output, "\nUnrecognized APP0 format\n");
+            fprintf(output, "\nUnrecognized APP0 format:\n");
     } else if(app->marker[1] = 0xE1) {
-        if (!strcmp(app->header, "Exif\0\0"))      //Check for valid Exif header
+        if (app->header != NULL && !strcmp(app->header, "Exif\0\0"))      //Check for valid Exif header
             parse_exif_md(app->metadata,output);
         else
-            fprintf(output, "\nUnrecognized APP1 format\n");
+            fprintf(output, "\nUnrecognized APP1 format:\n");
     }
 }
 

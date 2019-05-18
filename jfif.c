@@ -8,9 +8,10 @@
 struct jfif_data read_jfif(uint8_t* data)
 {
   struct jfif_data jdata;
-  int offset = 0;
+  int offset = 5;           //Ignore 'JFIF\0' header
   int thumb_size = 0;
-  
+
+
   jdata.major_ver = read8(&offset,data);
   jdata.minor_ver = read8(&offset,data);
   jdata.density_units = read8(&offset,data);
