@@ -20,35 +20,36 @@ struct jfif_data read_jfif(uint8_t* data)
   jdata.thumb_height = read8(&offset,data);
 
   thumb_size = 3*jdata.thumb_width*jdata.thumb_height;
-  
   jdata.thumb_data = (uint8_t*) malloc(thumb_size*sizeof(uint8_t));
-
   memcpy(jdata.thumb_data,data,thumb_size);
 
   return jdata;
 }
 
-void print_jfif(struct jfif_data data)
+void print_jfif(struct jfif_data data, FILE* output)
 {
-  print_header("JFIF Metadata");
-  printf("JFIF version: %d.%d\n", data.major_ver,data.minor_ver);
-  printf("Density units: ");
+  print_header("JFIF Metadata",output);
+  fprintf(output,"JFIF version: %d.%d\n", data.major_ver,data.minor_ver);
+  fprintf(output,"Density units: ");
 
   switch(data.density_units)
-    {
+  {
     case 0:
-      printf("No units\n");
-      break;
+        fprintf(output,"No units\n");
+        break;
     case 1:
-      printf("Pixels per inch\n");
-      break;
+        fprintf(output,"Pixels per inch\n");
+        break;
     case 2:
-      printf("Pixels per centimeter\n");
-      break;
-    }
+        fprintf(output,"Pixels per centimeter\n");
+        break;
+    default:
+        fprintf(output,"Corrupt data\n");
+        break;
+  }
 
-  printf("Horizontal pixel density: %d\n",data.x_density);
-  printf("Vertical pixel density: %d\n",data.y_density);
-  printf("Horizontal pixel count of the thumbnail: %d\n",data.thumb_width);
-  printf("Vertical pixel count of the thumbnail: %d\n",data.thumb_height);
+  fprintf(output,"Horizontal pixel density: %d\n",data.x_density);
+  fprintf(output,"Vertical pixel density: %d\n",data.y_density);
+  fprintf(output,"Horizontal pixel count of the thumbnail: %d\n",data.thumb_width);
+  fprintf(output,"Vertical pixel count of the thumbnail: %d\n",data.thumb_height);
 }

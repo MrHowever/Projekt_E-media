@@ -4,7 +4,7 @@
 #include "file_read_func.h"
 #include "jpeg_read.h"
 
-#define EXIF_BASE_OFFSET 0                                        //Skips the "Exif\0\0" string to correctly calculate offset
+#define EXIF_BASE_OFFSET 6                                        //Skips the "Exif\0\0" string to correctly calculate offset
 
 void fill_exif_map(struct Map* map)
 {
@@ -155,40 +155,30 @@ void fill_gps_map(struct Map* map)
   map_push(map,0x001F,"GPS positioning error");
 }
 
-char* val_t(uint16_t data_format)
+void fill_format_map(struct Map* map)
 {
-  switch(data_format)
-  {
-    case 1:
-      return "Unsigned byte";
-    case 2:
-      return "ASCII string";
-    case 3:
-      return "Unsigned short";
-    case 4:
-      return "Unsigned long";
-    case 5:
-      return "Unsigned rational";
-    case 6:
-      return "Signed byte";
-    case 7:
-      return "Undefined";
-    case 8:
-      return "Signed short";
-    case 9:
-      return "Signed long";
-    case 10:
-      return "Signed rational";
-    case 11:
-      return "Single float";
-    case 12:
-      return "Double float";
-    default:
-      return "Unknown";
-  }
+  map_push(map,1,"Unsigned byte");
+  map_push(map,2,"ASCII string");
+  map_push(map,3,"Unsigned short");
+  map_push(map,4,"Unsigned long");
+  map_push(map,5,"Unsigned rational");
+  map_push(map,6,"Signed byte");
+  map_push(map,7,"Undefined");
+  map_push(map,8,"Signed short");
+  map_push(map,9,"Signed long");
+  map_push(map,10,"Signed rational");
+  map_push(map,11,"Single float");
+  map_push(map,12,"Double float");
 }
 
-uint32_t data_size(uint16_t data_format)
+//Returns the string describing the data type of dictionary entry
+char* val_t(uint16_t data_format, struct Map* map)
+{
+    return map_find(map,data_format);
+}
+
+//Returns the size of data entry in bytes
+uint32_t data_size(uint16_t data_format,FILE* output)
 {
   switch(data_format)
   {
@@ -213,78 +203,94 @@ uint32_t data_size(uint16_t data_format)
         return 8;
 
       default:
-        printf("Unknown data format\n");
+        fprintf(output,"Unknown data format\n");
         return 0;
   }
 }
 
-int check_alignment(const char* alignment)
+//Returns 0 if the data is written in Intel alignment and 1 if it's written
+//in Motorola alignment
+int check_alignment(const char* alignment, FILE* output)
 {
   if(!strcmp(alignment,"II"))
    return 0;
   else if(!strcmp(alignment,"MM"))
     return 1;
   else {
-    printf("\nCorrupted byte allign information\n");
+    fprintf(output,"\nCorrupted byte allign information\n");
     return -1;
   }  
 }
 
-void parse_exif_md(uint8_t* metadata)
+
+void parse_exif_md(uint8_t* metadata, FILE* output)
 {
-  const char byte_align[3] = {metadata[0],metadata[1],'\0'};
+  //First 3 bytes contain information about byte alignment of the data
+  const char byte_align[3] = {metadata[6],metadata[7],'\0'};
   int align;
-  int offset = 2;
+  int offset = 8;
   struct Map dict, gps_dict;
   struct ifd_offsets offsets;
-  
+
+  //Initialize the maps
   map_init(&dict);
   map_init(&gps_dict);
   offsets_init(&offsets);
   fill_exif_map(&dict);
   fill_gps_map(&gps_dict);
 
-  align = check_alignment(byte_align);
-  
-  if(read16(metadata,&offset,align) != 0x002A) {   //Check for correct TAG mark
-    printf("\nCorrupted TAG mark\n");
+  //Check data byte alignment
+  align = check_alignment(byte_align,output);
+
+  //Check for correct TAG marker
+  if(read16(metadata,&offset,align) != 0x002A) {
+    fprintf(output,"\nCorrupted TAG mark\n");
     return;
   }
 
-  //Move to IFD0
+  //Read offset to IFD0
   offset = read32(metadata,&offset,align) + EXIF_BASE_OFFSET;                        //6 byte offset comes from "Exif\0\0"
 
-  print_header("Exif Metadata");
-  read_ifd(metadata,offset,align,&dict,&offsets);
+  //Print all the found IFD's
+  print_header("Exif Metadata",output);
+  read_ifd(metadata,offset,align,&dict,&offsets,output);
 
   if(offsets.subifd_offset >= 8) {
-    print_header("SubIFD Metadata");
-    read_ifd(metadata, offsets.subifd_offset + EXIF_BASE_OFFSET,align,&dict, &offsets);
+    print_header("SubIFD Metadata",output);
+    read_ifd(metadata, offsets.subifd_offset + EXIF_BASE_OFFSET,align,&dict, &offsets,output);
   }
 
   if(offsets.ifd1_offset >= 8) {
-    print_header("IFD1 Metadata");
-    read_ifd(metadata, offsets.ifd1_offset + EXIF_BASE_OFFSET,align,&dict, &offsets);
+    print_header("IFD1 Metadata",output);
+    read_ifd(metadata, offsets.ifd1_offset + EXIF_BASE_OFFSET,align,&dict, &offsets,output);
   }
 
   if(offsets.gps_offset >= 8) {
-    print_header("GPS Metadata");
-    read_ifd(metadata, offsets.gps_offset + EXIF_BASE_OFFSET,align,&gps_dict,&offsets);
+    print_header("GPS Metadata",output);
+    read_ifd(metadata, offsets.gps_offset + EXIF_BASE_OFFSET,align,&gps_dict,&offsets,output);
   }
 
   map_destroy(&dict);
   map_destroy(&gps_dict);
 }
 
-void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct ifd_offsets* offsets)
+
+//Read IFD segment
+void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct ifd_offsets* offsets,FILE* output)
 {
   uint16_t directory_entries = 0;
   uint16_t tag = 0, data_format = 0;
   uint32_t components_num = 0;
+  struct Map type_map;
 
-  directory_entries = read16(metadata,&offset,align);  //Read the number of directory entries
+  map_init(&type_map);
+  fill_format_map(&type_map);
 
-  printf("\n%-4s\t\t%-20s\t\t%s\t\t%s\t\t%s\n\n","Tag","Description","Value type","Components","Value");
+  //Read the number of directory entries
+  directory_entries = read16(metadata,&offset,align);
+
+  //Print header
+  fprintf(output,"\n%-4s\t\t%-20s\t\t%s\t\t%s\t\t%s\n\n","Tag","Description","Value type","Components","Value");
   
   //Read IFD
   for(uint16_t i = 0; i < directory_entries; i++) {            //-1 Because last entry is an offset to next IFD
@@ -292,9 +298,10 @@ void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct
     data_format = read16(metadata,&offset,align);
     components_num = read32(metadata,&offset,align);
     
-    printf("0x%04X\t\t%-25s\t%-20s\t%d\t\t\t",tag,map_find(dict,tag), val_t(data_format),components_num);
-    print_exif_data(data_format, components_num, metadata,offset,align);
+    fprintf(output,"0x%04X\t\t%-25s\t%-20s\t%d\t\t\t",tag,map_find(dict,tag), val_t(data_format,&type_map),components_num);
+    print_exif_data(data_format, components_num, metadata,offset,align,output);
 
+    //Tags 0x8769 and 0x8825 contain information about offsets to SubIFD and GPS IFD
     if(tag == 0x8769)
       offsets->subifd_offset = read32(metadata,&offset,align);
     else if(tag == 0x8825)
@@ -303,14 +310,16 @@ void read_ifd(uint8_t* metadata, int offset, int align, struct Map* dict, struct
       offset += 4;    //Exif data or its' offset is contained in 4 bytes    
   }
 
+  //Read offset to IFD1 segment
   offsets->ifd1_offset = read32(metadata,&offset,align);
 }
 
-void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align)
+void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int offset, int align,FILE* output)
 {
-  uint32_t data_length  = data_size(format) * comp_num;
+  uint32_t data_length  = data_size(format,output) * comp_num;
   double nom,denom,result;
-  
+
+  //If data is longer than 4 bytes it is an offset to actual data position
   if(data_length > 4)
     offset = read32(metadata, &offset,align) + EXIF_BASE_OFFSET;
 
@@ -319,48 +328,48 @@ void print_exif_data(uint16_t format, uint32_t comp_num, uint8_t* metadata, int 
     switch(format)
     {
         case 1:       //Unsigned byte
-          printf("%u ", metadata[offset+i]);
+          fprintf(output,"%u ", metadata[offset+i]);
           break;
         case 2:       //ASCII string
         case 6:       //Signed byte
-          printf("%c ",  metadata[offset+i]);
+          fprintf(output,"%c ",  metadata[offset+i]);
           break;
         case 3:       //Unsigned short
-          printf("%hu ",  read16(metadata, &offset, align));
+          fprintf(output,"%hu ",  read16(metadata, &offset, align));
           break;
         case 4:       //Unsigned long
-          printf("%lu ", (long unsigned int) read32(metadata,&offset,align));
+          fprintf(output,"%lu ", (long unsigned int) read32(metadata,&offset,align));
           break;
         case 5:       //Unsigned rational (unsigned long divided by unsigned long)
           nom = read32(metadata,&offset,align);
           denom = read32(metadata,&offset,align);
           result = denom == 0 ? 0 : nom/denom;
-          printf("%f ",result);
+          fprintf(output,"%f ",result);
           break;
         case 7:       //Undefined
           break;
         case 8:       //Signed short
-          printf("%hd ", read16(metadata,&offset,align));
+          fprintf(output,"%hd ", read16(metadata,&offset,align));
           break;
         case 9:       //Signed long
-          printf("%ld ", (long unsigned int) read32(metadata,&offset,align));
+          fprintf(output,"%ld ", (long unsigned int) read32(metadata,&offset,align));
           break;
         case 10:      //Signed rational
-          printf("%f ", ((double) read32(metadata,&offset,align))/((double) read32(metadata,&offset,align)));
+          fprintf(output,"%f ", ((double) read32(metadata,&offset,align))/((double) read32(metadata,&offset,align)));
           break;
         case 11:      //Single float
-          printf("%f ", (float) read32(metadata,&offset,align));
+          fprintf(output,"%f ", (float) read32(metadata,&offset,align));
           break;
         case 12:      //Double float
-          printf("%f %f ", (float) read32(metadata,&offset,align), (float) read32(metadata,&offset,align));
+          fprintf(output,"%f %f ", (float) read32(metadata,&offset,align), (float) read32(metadata,&offset,align));
           break;
         default:
-          printf("\nUndefined data format\n");
+          fprintf(output,"\nUndefined data format\n");
           break;
     }
   }
 
-  printf("\n");
+  fprintf(output,"\n");
 }
 
 void offsets_init(struct ifd_offsets* offsets)

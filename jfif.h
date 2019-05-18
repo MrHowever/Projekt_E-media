@@ -2,6 +2,7 @@
 #define JFIF_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 struct jfif_data
 {
@@ -14,7 +15,7 @@ struct jfif_data
 
 struct jfif_data read_jfif(uint8_t*);
 uint8_t read8(int*,uint8_t*);
-void print_jfif(struct jfif_data);
+void print_jfif(struct jfif_data,FILE*);
 
 
 #endif

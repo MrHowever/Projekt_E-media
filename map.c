@@ -2,7 +2,6 @@
 #include "map.h"
 #include <stdio.h>
 
-
 void map_init(struct Map* map)
 {
   map->first = 0;

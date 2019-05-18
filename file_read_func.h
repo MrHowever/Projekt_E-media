@@ -15,7 +15,7 @@ uint16_t read16(uint8_t*,int*,int);
 uint32_t read_mot32(uint8_t*);
 uint16_t read_mot16(uint8_t*);
 uint32_t intel_to_mot32(uint8_t*);
-uint16_t inteal_to_mot16(uint8_t*);
+uint16_t intel_to_mot16(uint8_t*);
 
 uint8_t read8(int*,uint8_t*);
 

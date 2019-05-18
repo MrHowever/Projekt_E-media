@@ -21,3 +21,5 @@ add_executable(Projekt_E_media
         map.h
         obrazek.jpeg
         obrazek1.jpeg dct.h dct.c)
+
+target_link_libraries(Projekt_E_media m)
